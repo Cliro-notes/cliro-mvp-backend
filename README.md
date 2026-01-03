@@ -25,18 +25,18 @@ Estructura Resumida:
 ## Ejecucion
 
 1. Crear y activar el entorno Conda
-```
+```bash
 conda create -n backend-cliro python=3.12
 conda activate backend-cliro
-bash```
+```
 2. Instalar dependencias desde requirements.txt
-```
+```bash
 pip install -r requirements.txt
-bash```
-3. Ejecutar servidor (backend)
 ```
+3. Ejecutar servidor (backend)
+```bash
 uvicorn app.main:app --reload
-bash```
+```
 
 ---
 
@@ -80,7 +80,7 @@ Responsabilidades:
 - Registrar routers
 - Configurar middlewares globales (CORS, logging, etc.)
 
-```
+```bash
     from fastapi import FastAPI
     from app.routers import auth, ai
 
@@ -88,7 +88,7 @@ Responsabilidades:
 
     app.include_router(auth.router, prefix="/auth")
     app.include_router(ai.router, prefix="/ai")
-bash```
+```
 
 ---
 
@@ -98,15 +98,15 @@ Contiene configuración y seguridad transversal al sistema.
 **app/core/**
 core/config.py
 Variables de entorno y configuración global.
-```
+```bash
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-bash```
+```
 
 **core/security.py**
 Tokens y validación de acceso.
-```
+```bash
 def verify_token(token: str): ...
-bash```
+```
 ---
 
 📁 app/routers/
@@ -115,10 +115,10 @@ Rutas de waitlist y login simple.
 - POST /auth/waitlist
 - POST /auth/login
 
-```
+```bash
 @router.post("/waitlist")
 def join_waitlist(data): ...
-bash```
+```
 
 **routers/ai.py**
 Rutas de acciones de IA (protegidas).
@@ -135,18 +135,18 @@ Define contratos de datos (request / response).
 **schemas/auth.py**
 Input de waitlist.
 
-```
+```bash
 email: str
 language: str
 ...
-bash```
+```
 
 **schemas/ai.py**
 Input de acciones de IA.
-```
+```bash
 text: str
 action: str
-bash```
+```
 ---
 
 📁 app/services/
@@ -166,25 +166,25 @@ Lógica de negocio (sin HTTP).
 
 📌 app/db.py
 Conexión centralizada a Supabase.
-```
+```bash
 supabase = create_client(...)
-bash```
+```
 
 ---
 
 📁 app/utils/
 **utils/crypto.py**
 Helpers de cifrado y hashing.
-```
+```bash
 def hash_value(value): ...
-bash```
+```
 
 ---
 
 📁 tests/
 Tests unitarios y de integración.
-```
+```bash
 test_auth.py
 test_ai.py
 ...
-bash```
+```
