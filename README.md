@@ -2,9 +2,8 @@
 Aqui se debe creat un backend en FastAPI que se conecte con Supabase. Para enviar en formato JSON data al frontend
 
 
-Algo parecido a esto (consultar con ChatGPT, Deepseek o Gemini):
-backend/
-
+Algo parecido a esto (consultar con ChatGPT, Deepseek, Gemini, etc): \
+backend/ \
 ├─ app/ \
 │  ├─ main.py \
 │  │ \
