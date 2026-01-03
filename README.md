@@ -72,8 +72,8 @@ backend/
 └─ requirements.txt
 ```
 
-📌 app/main.py
-Punto de entrada del backend
+📌 app/main.py \
+Punto de entrada del backend \
 Responsabilidades:
 
 - Crear la instancia de FastAPI
@@ -93,7 +93,7 @@ Responsabilidades:
 ---
 
 📁 app/core/ \
-Contiene configuración y seguridad transversal al sistema.
+Contiene configuración y seguridad transversal al sistema. \
 **core/config.py** \
 Variables de entorno y configuración global.
 ```bash
@@ -128,8 +128,7 @@ Rutas de acciones de IA (protegidas).
 ---
 
 📁 app/schemas/ \
-Define contratos de datos (request / response). \
-
+Define contratos de datos (request / response) \
 **schemas/auth.py** \
 Input de waitlist.
 
@@ -148,7 +147,7 @@ action: str
 ---
 
 📁 app/services/ \
-Lógica de negocio (sin HTTP). \
+Lógica de negocio (sin HTTP) \
 
 **services/auth_service.py**
 - Guardar waitlist
