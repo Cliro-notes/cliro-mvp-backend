@@ -1,7 +1,7 @@
 # Backend de Cliro Notes para el MVP (simple y sencillo)
 Aqui se debe creat un backend en FastAPI que se conecte con Supabase. Para enviar en formato JSON data al frontend
 
-
+## Estructura / Arquitectura
 Algo parecido a esto (consultar con ChatGPT, Deepseek, Gemini, etc): \
 backend/ \
 ├─ app/ \
