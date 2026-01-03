@@ -92,25 +92,23 @@ Responsabilidades:
 
 ---
 
-📁 app/core/
+📁 app/core/ \
 Contiene configuración y seguridad transversal al sistema.
-
-**app/core/**
-core/config.py
+**core/config.py** \
 Variables de entorno y configuración global.
 ```bash
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 ```
 
-**core/security.py**
+**core/security.py** \
 Tokens y validación de acceso.
 ```bash
 def verify_token(token: str): ...
 ```
 ---
 
-📁 app/routers/
-**routers/auth.py**
+📁 app/routers/ \
+**routers/auth.py** \
 Rutas de waitlist y login simple.
 - POST /auth/waitlist
 - POST /auth/login
@@ -120,7 +118,7 @@ Rutas de waitlist y login simple.
 def join_waitlist(data): ...
 ```
 
-**routers/ai.py**
+**routers/ai.py** \
 Rutas de acciones de IA (protegidas).
 - POST /ai/summarize
 - POST /ai/translate
@@ -129,10 +127,10 @@ Rutas de acciones de IA (protegidas).
 
 ---
 
-📁 app/schemas/
-Define contratos de datos (request / response).
+📁 app/schemas/ \
+Define contratos de datos (request / response). \
 
-**schemas/auth.py**
+**schemas/auth.py** \
 Input de waitlist.
 
 ```bash
@@ -141,7 +139,7 @@ language: str
 ...
 ```
 
-**schemas/ai.py**
+**schemas/ai.py** \
 Input de acciones de IA.
 ```bash
 text: str
@@ -149,8 +147,8 @@ action: str
 ```
 ---
 
-📁 app/services/
-Lógica de negocio (sin HTTP).
+📁 app/services/ \
+Lógica de negocio (sin HTTP). \
 
 **services/auth_service.py**
 - Guardar waitlist
@@ -164,7 +162,7 @@ Lógica de negocio (sin HTTP).
 
 ---
 
-📌 app/db.py
+📌 app/db.py \
 Conexión centralizada a Supabase.
 ```bash
 supabase = create_client(...)
@@ -172,8 +170,8 @@ supabase = create_client(...)
 
 ---
 
-📁 app/utils/
-**utils/crypto.py**
+📁 app/utils/ \
+**utils/crypto.py** \
 Helpers de cifrado y hashing.
 ```bash
 def hash_value(value): ...
@@ -181,7 +179,7 @@ def hash_value(value): ...
 
 ---
 
-📁 tests/
+📁 tests/ \
 Tests unitarios y de integración.
 ```bash
 test_auth.py
