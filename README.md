@@ -2,8 +2,11 @@
 Aqui se debe creat un backend en FastAPI. Algo parecido a esto (consultar con ChatGPT):
 
 backend/
+
 ├─ app/
+
 │  ├─ main.py
+
 │  │
 │  ├─ core/
 │  │  ├─ config.py        # env vars
