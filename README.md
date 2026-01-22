@@ -41,37 +41,6 @@ uvicorn app.main:app --reload
 ---
 
 ## Estructura / Arquitectura
-
-```txt
-backend/
-├─ app/
-│  ├─ main.py
-│  │
-│  ├─ core/
-│  │  ├─ config.py
-│  │  └─ security.py
-│  │
-│  ├─ routers/
-│  │  ├─ auth.py
-│  │  └─ ai.py
-│  │
-│  ├─ schemas/
-│  │  ├─ auth.py
-│  │  └─ ai.py
-│  │
-│  ├─ services/
-│  │  ├─ auth_service.py
-│  │  └─ ai_service.py
-│  │
-│  ├─ db.py
-│  │
-│  └─ utils/
-│     └─ crypto.py
-│
-├─ tests/
-└─ requirements.txt
-```
-
 📌 app/main.py \
 Punto de entrada del backend \
 Responsabilidades:
