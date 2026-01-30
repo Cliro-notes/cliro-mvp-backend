@@ -1,4 +1,29 @@
+# Core
 fastapi
 uvicorn[standard]
+python-multipart
+
+# Database
+supabase
+psycopg2-binary
+
+# AI
 google-genai
+
+# Security & Validation
+pydantic
+pydantic-settings
 python-dotenv
+email-validator
+pyjwt
+
+# Rate limiting (opcional por ahora)
+slowapi
+redis
+
+# Testing
+httpx
+
+# Utilities
+python-dateutil
+pytz

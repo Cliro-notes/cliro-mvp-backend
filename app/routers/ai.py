@@ -1,42 +1,83 @@
-import os 
-from google import genai
+from fastapi import APIRouter, HTTPException, Query, Request
+from typing import Optional
+from app.services.ai_service import process_ai_action
+# from app.core.security import verify_token  # COMENTAR por ahora
+import logging
 
-# Gemini API Key Configuration
-client = genai.Client(api_key="AIzaSyBr7Tu84ZBtWIqWDbDoVIiSLYb6M83Upf8")
+router = APIRouter()
+logger = logging.getLogger(__name__)
 
-# Prompt Template Function
-def prompt_to_ai(userActionJSON: str) -> str:
-    # Prompt para generar el output para el usuario
-    prompt = f"""
-        You are an AI assistant that modifies or analyzes text based on a user-selected action. In which the user provides a JSON object with the following structure:
-        ACTION: Describes the operation to perform on the USER TEXT. Possible values include:
-            - 'Resumir': Return a concise and clear summary preserving the original meaning.
-            - 'Explicar': Explain the text clearly and simply, adapting the explanation level if PAYLOAD specifies it.
-            - 'Reescribir': Rewrite the text while preserving meaning.
-            - 'Traducir': Translate the text to the language specified in PAYLOAD.
-        PAYLOAD (optional, may be null): If PAYLOAD specifies a tone or style, apply it consistently.
-        USER TEXT: The text to be processed according to the ACTION and PAYLOAD.
-        ---
-        INSTRUCTIONS:
-        - Perform the task strictly according to the selected ACTION.
-        - If PAYLOAD is provided, use it as a modifier for the ACTION (e.g. tone, language, style, level of detail).
-        - If PAYLOAD is null or empty, infer a reasonable default for the ACTION.
-        - Do NOT explain what you are doing unless the ACTION explicitly requires explanation.
-        - Do NOT add meta commentary, headers, or emojis.
-        - Keep the output clean, direct, and useful.
-        ---
-        User JSON:
-        {userActionJSON}
-        OUTPUT ONLY THE RESULTING TEXT.
+@router.get("/process")
+async def process_ai(
+    request: Request,  # Agregar request para rate limiting si lo usas
+    action: str = Query(..., description="Acción a realizar: summarize, explain, rewrite, translate, xray"),
+    text: str = Query(..., description="Texto a procesar"),
+    payload: Optional[str] = Query(None, description="Parámetros adicionales"),
+    tone: Optional[str] = Query(None, description="Tono para rewrite: formal, concise, casual, texto"),
+    language: Optional[str] = Query(None, description="Idioma para traducción: es, en, fr, de, it, pt"),
+    user_id: Optional[str] = Query(None, description="ID del usuario para tracking"),
+    token: Optional[str] = Query(None, description="Token de autenticación (opcional por ahora)")
+):
     """
-    return prompt
+    Endpoint principal para procesamiento de IA
+    Compatible con llamadas GET desde la extensión Chrome
+    """
+    try:
+        # Por ahora no validamos token (para MVP)
+        # if token:
+        #     verify_token(token)
+        
+        # Construir el request en formato JSON para compatibilidad
+        ai_request = {
+            "action": action,
+            "text": text,
+            "payload": payload or tone or language,
+            "user_id": user_id,
+            "client_ip": request.client.host if request.client else None
+        }
+        
+        logger.info(f"Procesando acción de IA: {action}, caracteres: {len(text)}")
+        
+        result = await process_ai_action(ai_request)
+        return {
+            "success": True,
+            "result": result,
+            "action": action,
+            "metadata": {
+                "chars_processed": len(text),
+                "action_type": action,
+                "language": language or "auto"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error en proceso de IA: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "success": False,
+                "error": str(e) if settings.debug else "Error en procesamiento",
+                "action": action
+            }
+        )
 
-# Output Function
-def generate_ai_response(userActionJSON: str) -> str:
-    prompt = prompt_to_ai(userActionJSON)
-    # AI gets the prompt and generates the response
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=prompt
-    )
-    return response.text
+@router.get("/actions")
+async def get_available_actions():
+    """
+    Devuelve las acciones disponibles para la extensión
+    """
+    from app.core.constants import AI_ACTIONS, REWRITE_TONES
+    return {
+        "actions": list(AI_ACTIONS.values()),
+        "rewrite_tones": REWRITE_TONES,
+        "supported_languages": ["es", "en", "fr", "de", "it", "pt"]
+    }
+
+@router.get("/test")
+async def test_ai():
+    """Endpoint de prueba para IA"""
+    return {
+        "status": "ok",
+        "message": "Servicio de IA funcionando",
+        "timestamp": datetime.utcnow().isoformat()
+    }

@@ -1,29 +1,89 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers.ai import generate_ai_response
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from app.routers import auth, ai
+from app.core.config import settings
+import logging
+from datetime import datetime
 
-app = FastAPI()
+# Configuración de logging
+logging.basicConfig(
+    level=logging.DEBUG if settings.debug else logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
-# CORS Configuration
+app = FastAPI(
+    title=settings.app_name,
+    description="Backend para Cliro Notes - Extensión de Chrome",
+    version="1.0.0",
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None
+)
+
+# Rate Limiter global
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS Configuration usando la lista convertida
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Routes
-@app.get("/")
-def root():
-    return {"message": "API is running"}
+# Registrar routers
+app.include_router(auth.router, prefix="/api/auth")
+app.include_router(ai.router, prefix="/api/ai")
 
-@app.get("/ai/")
-def response(action: str, payload: str = None, userText: str = None):
-    userActionJSON = {
-        "action": action,
-        "payload": payload,
-        "userText": userText
+@app.get("/")
+@limiter.limit("30/minute")
+async def root(request: Request):
+    """Endpoint raíz"""
+    return {
+        "message": "Bienvenido a Cliro Notes API",
+        "version": settings.app_version,
+        "environment": settings.environment.value,
+        "docs": "/docs" if settings.debug else None,
+        "endpoints": {
+            "auth": "/api/auth",
+            "ai": "/api/ai"
+        }
     }
-    response_text = generate_ai_response(userActionJSON)
-    return {"response": response_text}
+
+@app.get("/health")
+@limiter.limit("60/minute")
+async def health_check(request: Request):
+    """Health check para monitoreo"""
+    from app.db import db_manager
+    try:
+        # Verificar conexión a Supabase
+        db_manager.test_connection()
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "environment": settings.environment.value,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e) if settings.debug else "connection_error",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.debug,
+        log_level="debug" if settings.debug else "info"
+    )
