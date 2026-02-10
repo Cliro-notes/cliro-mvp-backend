@@ -3,12 +3,14 @@ import os
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World from Railway"}
+print(f"🚀 Environment check:")
+print(f"   PORT: {os.getenv('PORT')}")
+print(f"   PWD: {os.getcwd()}")
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8080))
-    print(f"Starting server on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "cliro-notes"}
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
