@@ -9,6 +9,13 @@ from app.core.config import settings
 import logging
 from datetime import datetime
 
+import os
+import logging
+
+# Add startup logging
+logging.info(f"Starting app with PORT={os.getenv('PORT')}")
+logging.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
+
 # Configuración de logging
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
@@ -77,4 +84,15 @@ async def health_check(request: Request):
             "error": str(e) if settings.debug else "connection_error",
             "timestamp": datetime.utcnow().isoformat()
         }
-
+        
+if __name__ == "__main__":
+    import uvicorn
+    from app.core.config import settings
+    
+    uvicorn.run(
+        "app.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=False,
+        workers=1
+    )

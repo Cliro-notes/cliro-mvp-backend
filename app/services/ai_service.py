@@ -105,7 +105,10 @@ def build_rewrite_prompt(text: str, tone: str = None) -> str:
     TEXTO REESCRITO:
     """
 
-def build_translate_prompt(text: str, language: str = "es") -> str:
+def build_translate_prompt(text: str, language: str = None) -> str:
+    if language is None:
+        language = "es"
+        
     """
     Construye prompt para traducción
     """

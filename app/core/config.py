@@ -1,3 +1,5 @@
+# app/core/config.py
+import os
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 from enum import Enum
@@ -12,6 +14,10 @@ class Settings(BaseSettings):
     # Environment
     environment: Environment = Environment.DEVELOPMENT
     debug: bool = True
+    
+    # Server Configuration - ADD THESE
+    host: str = "0.0.0.0"
+    port: int = int(os.getenv("PORT", 8080))  # Railway provides PORT
     
     # API Keys
     gemini_api_key: str

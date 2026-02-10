@@ -7,17 +7,18 @@ import logging
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.get("/process")
+@router.get("/")
 async def process_ai(
     request: Request,  # Agregar request para rate limiting si lo usas
     action: str = Query(..., description="Acción a realizar: summarize, explain, rewrite, translate, xray"),
-    text: str = Query(..., description="Texto a procesar"),
+    userText: str = Query(..., description="Texto a procesar"),
     payload: Optional[str] = Query(None, description="Parámetros adicionales"),
     tone: Optional[str] = Query(None, description="Tono para rewrite: formal, concise, casual, texto"),
     language: Optional[str] = Query(None, description="Idioma para traducción: es, en, fr, de, it, pt"),
     user_id: Optional[str] = Query(None, description="ID del usuario para tracking"),
     token: Optional[str] = Query(None, description="Token de autenticación (opcional por ahora)")
 ):
+    text = userText.strip()
     """
     Endpoint principal para procesamiento de IA
     Compatible con llamadas GET desde la extensión Chrome
