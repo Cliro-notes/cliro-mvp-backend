@@ -47,7 +47,7 @@ def ask_ai(q: Question):
         prompt = f"{SYSTEM_PROMPT}\n\nPregunta: {q.question}"
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3-flash-preview",
             contents=prompt,
         )
 
