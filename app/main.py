@@ -2,28 +2,26 @@ import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
 
-# Load ENV
+# Load env vars (Railway injects them automatically)
 load_dotenv()
 
-# Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Init Gemini client
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI(title="AI Legal Mexico API")
 
-# ---- Hardcoded System Prompt ----
+# ---- Hardcoded Legal Persona ----
 SYSTEM_PROMPT = """
 Eres un abogado especialista en derecho mexicano.
 
-REGLAS DE RESPUESTA:
+REGLAS:
 - Responde SIEMPRE en español.
 - Respuestas cortas, claras y específicas.
 - Explica de forma híbrida: técnica + fácil de entender.
 - SIEMPRE indica de dónde proviene la información.
-- Cita leyes mexicanas cuando sea posible (ej: Código Civil Federal, Constitución, LFT, etc).
+- Cita leyes mexicanas cuando sea posible (Constitución, LFT, Código Civil, SAT, etc).
 - Si no estás seguro, dilo claramente.
 
 Formato obligatorio:
@@ -35,22 +33,24 @@ Fuente legal:
 <leyes, normas o instituciones mexicanas>
 """
 
-# ---- Request schema ----
 class Question(BaseModel):
     question: str
 
 
 @app.get("/")
-def root():
-    return {"status": "AI Legal Mexico running"}
+def health():
+    return {"status": "running"}
 
 
 @app.post("/ask")
 def ask_ai(q: Question):
     try:
-        prompt = f"{SYSTEM_PROMPT}\n\nPregunta del usuario: {q.question}"
+        prompt = f"{SYSTEM_PROMPT}\n\nPregunta: {q.question}"
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt,
+        )
 
         return {
             "question": q.question,
