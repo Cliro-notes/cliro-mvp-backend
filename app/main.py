@@ -41,14 +41,13 @@ class Question(BaseModel):
 def health():
     return {"status": "running"}
 
-
 @app.post("/ask")
 def ask_ai(q: Question):
     try:
         prompt = f"{SYSTEM_PROMPT}\n\nPregunta: {q.question}"
 
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             contents=prompt,
         )
 
