@@ -1,60 +1,98 @@
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from app.routers import auth, ai
+from app.core.config import settings
+import logging
+from datetime import datetime
+
 import os
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from dotenv import load_dotenv
-from google import genai
+import logging
 
-# Load env vars (Railway injects them automatically)
-load_dotenv()
+# Add startup logging
+logging.info(f"Starting app with PORT={os.getenv('PORT')}")
+logging.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
 
-# Init Gemini client
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Configuración de logging
+logging.basicConfig(
+    level=logging.DEBUG if settings.debug else logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
-app = FastAPI(title="AI Legal Mexico API")
+app = FastAPI(
+    title=settings.app_name,
+    description="Backend para Cliro Notes - Extensión de Chrome",
+    version="1.0.0",
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None
+)
 
-# ---- Hardcoded Legal Persona ----
-SYSTEM_PROMPT = """
-Eres un abogado especialista en derecho mexicano.
+# Rate Limiter global
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-REGLAS:
-- Responde SIEMPRE en español.
-- Respuestas cortas, claras y específicas.
-- Explica de forma híbrida: técnica + fácil de entender.
-- SIEMPRE indica de dónde proviene la información.
-- Cita leyes mexicanas cuando sea posible (Constitución, LFT, Código Civil, SAT, etc).
-- Si no estás seguro, dilo claramente.
+# CORS Configuration usando la lista convertida
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-Formato obligatorio:
-
-Respuesta:
-<explicación>
-
-Fuente legal:
-<leyes, normas o instituciones mexicanas>
-"""
-
-class Question(BaseModel):
-    question: str
-
+# Registrar routers
+app.include_router(auth.router, prefix="/api/auth")
+app.include_router(ai.router, prefix="/api/ai")
 
 @app.get("/")
-def health():
-    return {"status": "running"}
-
-@app.post("/ask")
-def ask_ai(q: Question):
-    try:
-        prompt = f"{SYSTEM_PROMPT}\n\nPregunta: {q.question}"
-
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=prompt,
-        )
-
-        return {
-            "question": q.question,
-            "answer": response.text
+@limiter.limit("30/minute")
+async def root(request: Request):
+    """Endpoint raíz"""
+    return {
+        "message": "Bienvenido a Cliro Notes API",
+        "version": settings.app_version,
+        "environment": settings.environment.value,
+        "docs": "/docs" if settings.debug else None,
+        "endpoints": {
+            "auth": "/api/auth",
+            "ai": "/api/ai"
         }
+    }
 
+@app.get("/health")
+@limiter.limit("60/minute")
+async def health_check(request: Request):
+    """Health check para monitoreo"""
+    from app.db import db_manager
+    try:
+        # Verificar conexión a Supabase
+        db_manager.test_connection()
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "environment": settings.environment.value,
+            "timestamp": datetime.utcnow().isoformat()
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e) if settings.debug else "connection_error",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+if __name__ == "__main__":
+    import uvicorn
+    from app.core.config import settings
+    
+    uvicorn.run(
+        "app.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=False,
+        workers=1
+    )
